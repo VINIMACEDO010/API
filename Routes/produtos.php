@@ -4,6 +4,7 @@ header('Content-Type: application/json');
 
 $method = $_SERVER['REQUEST_METHOD'];
 $input = json_decode(file_get_contents("php://input"), true);
+$id = $_GET['id'] ?? null;
 
 switch ($method) {
     case 'GET':
@@ -12,11 +13,14 @@ switch ($method) {
     case 'POST':
         createProduto($input);
         break;
-    case 'PUT':
-        updateProduto($_GET['id'], $input);
+        case 'PUT':
+            updateProduto($input['id'], $input);
+         break;
+        case 'DELETE':
+            deleteProduto($input['id']);
         break;
-    case 'DELETE':
-        deleteProduto($_GET['id']);
+    default:
+        echo json_encode(["error" => "Método HTTP não suportado."]);
         break;
 }
 
@@ -29,14 +33,29 @@ function getProdutos() {
 function createProduto($data) {
     $pdo = getConnection();
     $stmt = $pdo->prepare("INSERT INTO produtos (nome, descricao, preco, quantidade_estoque, categoria_id, fornecedor_id) VALUES (?, ?, ?, ?, ?, ?)");
-    $stmt->execute([$data['nome'], $data['descricao'], $data['preco'], $data['quantidade_estoque'], $data['categoria_id'], $data['fornecedor_id']]);
+    $stmt->execute([
+        $data['nome'],
+        $data['descricao'],
+        $data['preco'],
+        $data['quantidade_estoque'],
+        $data['categoria_id'],
+        $data['fornecedor_id']
+    ]);
     echo json_encode(["message" => "Produto criado com sucesso!"]);
 }
 
 function updateProduto($id, $data) {
     $pdo = getConnection();
     $stmt = $pdo->prepare("UPDATE produtos SET nome = ?, descricao = ?, preco = ?, quantidade_estoque = ?, categoria_id = ?, fornecedor_id = ? WHERE id = ?");
-    $stmt->execute([$data['nome'], $data['descricao'], $data['preco'], $data['quantidade_estoque'], $data['categoria_id'], $data['fornecedor_id'], $id]);
+    $stmt->execute([
+        $data['nome'],
+        $data['descricao'],
+        $data['preco'],
+        $data['quantidade_estoque'],
+        $data['categoria_id'],
+        $data['fornecedor_id'],
+        $id
+    ]);
     echo json_encode(["message" => "Produto atualizado com sucesso!"]);
 }
 

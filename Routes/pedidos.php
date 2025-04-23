@@ -12,6 +12,12 @@ switch ($method) {
     case 'POST':
         createPedido($input);
         break;
+        case 'PUT':
+        updatePedido($input);
+        break;
+    case 'DELETE':
+        deletePedido($_GET['id']);
+        break;
 }
 
 function getPedidos() {
@@ -22,13 +28,26 @@ function getPedidos() {
 
 function createPedido($data) {
     $pdo = getConnection();
-    $stmt = $pdo->prepare("INSERT INTO pedidos (produto_id, quantidade) VALUES (?, ?)");
-    $stmt->execute([$data['produto_id'], $data['quantidade']]);
-
-    // Atualiza o estoque
-    $update = $pdo->prepare("UPDATE produtos SET quantidade_estoque = quantidade_estoque - ? WHERE id = ?");
-    $update->execute([$data['quantidade'], $data['produto_id']]);
-
-    echo json_encode(["message" => "Pedido criado e estoque atualizado!"]);
+    $stmt = $pdo->prepare("INSERT INTO pedidos (produto_id, quantidade, data_pedido) VALUES (?, ?, ?)");
+    $stmt->execute([$data['produto_id'], $data['quantidade'], $data['data_pedido']]);
+    echo json_encode(["message" => "Pedido criado com sucesso!"]);
 }
-?>
+
+function updatePedido($data) {
+    $pdo = getConnection();
+    $stmt = $pdo->prepare("UPDATE pedidos SET produto_id = ?, quantidade = ?, data_pedido = ? WHERE id = ?");
+    $stmt->execute([
+        $data['produto_id'],
+        $data['quantidade'],
+        $data['data_pedido'],
+        $data['id']
+    ]);
+    echo json_encode(["message" => "Pedido atualizado com sucesso!"]);
+}
+
+function deletePedido($id) {
+    $pdo = getConnection();
+    $stmt = $pdo->prepare("DELETE FROM pedidos WHERE id = ?");
+    $stmt->execute([$id]);
+    echo json_encode(["message" => "Pedido excluído com sucesso!"]);
+}

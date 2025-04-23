@@ -1,0 +1,9 @@
+{
+    "nome": "Mouse API",
+    "descricao": "Mouse RGB com 6 botões",
+    "preco": 120.50,
+    "quantidade_estoque": 10,
+    "categoria_id": 1,
+    "fornecedor_id": 2
+  }
+  

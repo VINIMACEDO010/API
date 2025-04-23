@@ -1,0 +1,3 @@
+{
+    "get": "http://localhost/API/Routes/produtos.php -> Apenas buscar o link com o metodo GET"
+}
