@@ -2,69 +2,50 @@ import React, { useState, useEffect } from 'react';
 import { Table, Button, Modal, Form, Spinner } from 'react-bootstrap';
 import api from '../services/api';
 
-export default function Categoria() {
-  const [categorias, setCategorias] = useState([]);
+export default function Categorias() {
+  const [items, setItems]     = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showModal, setShowModal] = useState(false);
-  const [editing, setEditing] = useState(null);
-  const [nome, setNome] = useState('');
+  const [show, setShow]       = useState(false);
+  const [edit, setEdit]       = useState(null);
+  const [nome, setNome]       = useState('');
 
-  const fetchCategorias = async () => {
-    setLoading(true);
-    try {
-      const { data } = await api.get('?rota=categorias');
-      setCategorias(data);
-    } catch (err) {
-      console.error(err);
-      alert('Erro ao carregar categorias');
-    } finally {
-      setLoading(false);
+  useEffect(() => {
+    async function load() {
+      setLoading(true);
+      try {
+        const { data } = await api.get('?rota=categorias');
+        setItems(data);
+      } catch {
+        alert('Erro ao carregar categorias');
+      } finally {
+        setLoading(false);
+      }
     }
-  };
+    load();
+  }, []);
 
-  useEffect(fetchCategorias, []);
+  const openNew  = () => { setEdit(null); setNome(''); setShow(true); };
+  const openEdit = i => { setEdit(i); setNome(i.nome); setShow(true); };
 
-  const openNew = () => {
-    setEditing(null);
-    setNome('');
-    setShowModal(true);
-  };
-  const openEdit = cat => {
-    setEditing(cat);
-    setNome(cat.nome);
-    setShowModal(true);
-  };
   const handleDelete = async id => {
-    if (!window.confirm('Confirmar exclusão?')) return;
-    try {
-      await api.delete('?rota=categorias', { data: { id } });
-      fetchCategorias();
-    } catch (err) {
-      console.error(err);
-      alert('Erro ao excluir');
-    }
+    if (!window.confirm('Confirma exclusão?')) return;
+    await api.delete('?rota=categorias', { data:{ id } });
+    setItems(items.filter(i=>i.id!==id));
   };
 
   const handleSave = async () => {
-    try {
-      if (editing) {
-        await api.put('?rota=categorias', { id: editing.id, nome });
-      } else {
-        await api.post('?rota=categorias', { nome });
-      }
-      setShowModal(false);
-      fetchCategorias();
-    } catch (err) {
-      console.error(err);
-      alert('Erro ao salvar');
-    }
+    if (!nome.trim()) return;
+    if (edit) await api.put('?rota=categorias', { id: edit.id, nome });
+    else      await api.post('?rota=categorias', { nome });
+    setShow(false);
+    const { data } = await api.get('?rota=categorias');
+    setItems(data);
   };
 
   return (
     <>
-      <h2>Categoria</h2>
+      <h2>Categorias</h2>
       <Button className="mb-3" onClick={openNew}>Nova Categoria</Button>
-
       {loading
         ? <Spinner animation="border" />
         : (
@@ -73,13 +54,13 @@ export default function Categoria() {
               <tr><th>ID</th><th>Nome</th><th>Ações</th></tr>
             </thead>
             <tbody>
-              {categorias.map(c => (
-                <tr key={c.id}>
-                  <td>{c.id}</td>
-                  <td>{c.nome}</td>
+              {items.map(({id,nome})=>(
+                <tr key={id}>
+                  <td>{id}</td>
+                  <td>{nome}</td>
                   <td>
-                    <Button size="sm" variant="warning" onClick={() => openEdit(c)}>Editar</Button>{' '}
-                    <Button size="sm" variant="danger" onClick={() => handleDelete(c.id)}>Excluir</Button>
+                    <Button size="sm" variant="warning" onClick={()=>openEdit({id,nome})}>Editar</Button>{' '}
+                    <Button size="sm" variant="danger"  onClick={()=>handleDelete(id)}>Excluir</Button>
                   </td>
                 </tr>
               ))}
@@ -88,28 +69,21 @@ export default function Categoria() {
         )
       }
 
-      <Modal show={showModal} onHide={() => setShowModal(false)}>
+      <Modal show={show} onHide={()=>setShow(false)}>
         <Modal.Header closeButton>
-          <Modal.Title>{editing ? 'Editar' : 'Nova'} Categoria</Modal.Title>
+          <Modal.Title>{edit?'Editar':'Nova'} Categoria</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <Form>
-            <Form.Group controlId="formNome">
-              <Form.Label>Nome</Form.Label>
-              <Form.Control
-                type="text"
-                value={nome}
-                onChange={e => setNome(e.target.value)}
-                placeholder="Digite o nome"
-              />
-            </Form.Group>
-          </Form>
+          <Form.Control
+            type="text"
+            value={nome}
+            onChange={e=>setNome(e.target.value)}
+            placeholder="Nome da categoria"
+          />
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowModal(false)}>Cancelar</Button>
-          <Button variant="primary" onClick={handleSave}>
-            {editing ? 'Atualizar' : 'Criar'}
-          </Button>
+          <Button variant="secondary" onClick={()=>setShow(false)}>Cancelar</Button>
+          <Button variant="primary"   onClick={handleSave}>{edit?'Atualizar':'Criar'}</Button>
         </Modal.Footer>
       </Modal>
     </>
